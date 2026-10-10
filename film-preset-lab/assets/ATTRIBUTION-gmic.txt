@@ -1,0 +1,12 @@
+Pat David — Instant Film color LUTs, distributed through G’MIC.
+Local files are unmodified HaldCLUT downloads:
+gmic-px70.png: https://gmic.eu/color_presets/instant_consumer/clut/polaroid_px-70.png
+gmic-timezero.png: https://gmic.eu/color_presets/instant_consumer/clut/polaroid_time_zero_expired.png
+gmic-669.png: https://gmic.eu/color_presets/instant_pro/clut/polaroid_669.png
+
+RawTherapee Film Simulation Collection license: CC BY-SA 4.0
+License: https://creativecommons.org/licenses/by-sa/4.0/
+Collection notice: https://github.com/cedeber/hald-clut/blob/master/HaldCLUT/Film%20Simulation/README.txt
+Author: https://patdavid.net/2013/08/film-emulation-presets-in-gmic-gimp/
+Texture is an independent prototype effect, not baked into these LUT files.
+Stock names describe creative approximations; no manufacturer endorsement.
