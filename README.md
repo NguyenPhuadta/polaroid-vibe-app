@@ -2,7 +2,11 @@
 
 Prototype và research cho app camera film iOS: chụp ảnh, preset instant, hiệu ứng in ảnh và gallery.
 
-Hiện có công cụ thử preset trên trình duyệt; chưa có project iOS.
+Hiện có công cụ thử preset trên trình duyệt và bản UI iOS native để test trên iPhone.
+
+## Bản iOS thử nghiệm
+
+Mở `ios/PolaroidVibe.xcodeproj` trong Xcode. Bản SwiftUI có chọn/chụp ảnh, preview 4 preset instant, chỉnh chất film, Gallery lưu local và chia sẻ ảnh. Xem [hướng dẫn và giới hạn bản thử](ios/README.md).
 
 ## Chạy prototype
 
@@ -32,4 +36,4 @@ Xem [research, quyết định và attribution](film-preset-lab/README.md). LUT 
 
 ## Bước tiếp theo
 
-Thiết kế Figma cho Camera, Preview, Gallery và Detail; sau đó xây app iOS và đối chiếu màu preview/export trên iPhone.
+Test UI Camera, Preview, Gallery và Detail trên iPhone; đối chiếu màu native/web, sau đó hoàn thiện camera live và thiết kế sản phẩm.
