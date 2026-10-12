@@ -1,0 +1,30 @@
+{
+  "id": "indoor-print",
+  "name": "Indoor Flash Print",
+  "version": 1,
+  "approvedAt": "2026-10-12",
+  "lut": "assets/gmic-px680.png",
+  "lutStrength": 0.88,
+  "tint": 0.19,
+  "textureEnabled": true,
+  "textureStrength": 1.0,
+  "textureMode": "no-color-cast",
+  "colorSpace": "sRGB",
+  "pipeline": ["indoorTint", "blendLut", "printColor", "applyDisposable", "paperFrame"],
+  "tintGains": [1.0228, 0.9772, 1.0228],
+  "printColor": {
+    "saturation": 0.82,
+    "exponent": 1.12,
+    "floorRGB": [11, 7, 6],
+    "ceilingRGB": [250, 245, 235]
+  },
+  "grainSeeds": [31337, 9191],
+  "paperFrame": {
+    "color": "#eeeae0",
+    "sideAndTopFractionOfImageWidth": 0.055,
+    "bottomFractionOfImageWidth": 0.19,
+    "crop": "none"
+  },
+  "implementation": "film-preset-lab/app.js",
+  "notes": "Creative recipe approved on an indoor photo; tint uses this prototype's scale. Does not reproduce physical flash lighting."
+}

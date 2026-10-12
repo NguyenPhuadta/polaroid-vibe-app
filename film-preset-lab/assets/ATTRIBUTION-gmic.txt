@@ -10,3 +10,5 @@ Collection notice: https://github.com/cedeber/hald-clut/blob/master/HaldCLUT/Fil
 Author: https://patdavid.net/2013/08/film-emulation-presets-in-gmic-gimp/
 Texture is an independent prototype effect, not baked into these LUT files.
 Stock names describe creative approximations; no manufacturer endorsement.
+
+gmic-px680.png: https://gmic.eu/color_presets/instant_consumer/clut/polaroid_px-680.png (unmodified)

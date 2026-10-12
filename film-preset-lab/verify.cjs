@@ -7,7 +7,7 @@ const context = {
     if (!elements.has(id)) elements.set(id, {getContext:()=>({}),addEventListener:()=>{}});
     return elements.get(id);
   }},
-  Image: class {}, window: {}, Uint8ClampedArray, Map, Math
+  URLSearchParams, location: {search:''}, Image: class {}, window: {}, Uint8ClampedArray, Map, Math
 };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(__dirname+'/app.js','utf8'),context);
@@ -74,3 +74,12 @@ sampleLut(sx70,0,0,0,result);
 [0.172549,0.180392,0.172549].forEach((v,c)=>assert.ok(Math.abs(v*255-result[c])<0.0001));
 for(let i=0;i<1000;i++) {sampleLut(sx70,(i*37)%256,(i*71)%256,(i*109)%256,result); result.forEach(v=>assert.ok(Number.isFinite(v)&&v>=0&&v<=255));}
 console.log('PASS: CUBE identity/axes, malformed size/domain rejection, real SX-70 64³ data and finite output.');
+
+const {indoorTint} = context.window.filmLab;
+indoorTint(80,140,90,0,result);
+assert.deepEqual(result,[80,140,90]);
+indoorTint(80,140,90,0.5,result);
+assert.ok(result[0]>80 && result[1]<140 && result[2]>90);
+indoorTint(255,255,255,1,result);
+assert.ok(result.every(v=>v>=0 && v<=255));
+console.log('PASS: indoor tint bypass, green correction direction, clipped range.');

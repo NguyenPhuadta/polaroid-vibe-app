@@ -1,6 +1,8 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const descriptions = {
+  'indoor-print': 'Indoor Flash Print: PX-680 phối màu kem ấm, bóng tối nâu, nét mềm và viền giấy. Không tái tạo ánh sáng flash thật.',
+  'gmic-px680': 'Indoor Instant · PX-680: chỉnh ám xanh trước LUT, texture nhẹ không thêm cyan vào bóng tối. Chỉnh Tint theo ảnh thực tế; chưa hiệu chuẩn cho đèn cụ thể.',
   picturefx: 'PictureFX SX-70 Core LUT gốc: tương phản phai, xanh olive dịu, vùng sáng kem. Template chính đã chọn; grain, nét dịu và tối góc có thể chỉnh riêng.',
   'gmic-669': 'G’MIC / Pat David 669: instant dịu, vùng sáng hơi xanh kem, giữ màu cảnh rõ hơn.',
   'gmic-px70': 'G’MIC / Pat David PX-70: vùng tối xanh, vùng sáng vàng kem, lệch màu vintage rõ.',
@@ -31,6 +33,7 @@ function haldCubeSize(width, height) {
   return level ** 2;
 }
 async function getLut(name) {
+  if (name==='indoor-print') name='gmic-px680';
   if (!lutCache.has(name)) {
     const pending = name==='picturefx' ? fetch('assets/picturefx-sx70.cube').then(response => {
       if (!response.ok) throw new Error('Không tải được PictureFX SX-70.');
@@ -121,6 +124,8 @@ function alpineColor(r,g,b,amount,result) {
     result[c]=original*(1-amount)+toned*255*amount;
   }
 }
+// `alpine=true` is also the approved Indoor recipe's `no-color-cast` mode:
+// keep softness/grain/vignette (0.23 coefficient), skip faded blacks and cast.
 function applyDisposable(image, amount, alpine = false) {
   if (amount === 0) return;
   const {width:w,height:h,data:d} = image;
@@ -144,12 +149,39 @@ function applyDisposable(image, amount, alpine = false) {
     }
   }
 }
+// Green–magenta adjustment on processed sRGB, not a calibrated RAW white balance.
+function indoorTint(r,g,b,amount,result) {
+  const gains = [1+0.12*amount,1-0.12*amount,1+0.12*amount];
+  [r,g,b].forEach((v,c)=>result[c]=Math.max(0,Math.min(255,v*gains[c])));
+}
+function printColor(r,g,b,result) {
+  const luma = r*0.2126+g*0.7152+b*0.0722;
+  const floor=[11,7,6], ceiling=[250,245,235];
+  [r,g,b].forEach((v,c)=> {
+    const muted=v*0.82+luma*0.18;
+    result[c]=floor[c]+(ceiling[c]-floor[c])*Math.pow(muted/255,1.12);
+  });
+}
+function printCanvas() {
+  const canvas=document.createElement('canvas');
+  const border=Math.round(graded.width*0.055), bottom=Math.round(graded.width*0.19);
+  canvas.width=graded.width+border*2; canvas.height=graded.height+border+bottom;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#eeeae0'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(graded,border,border);
+  return canvas;
+}
 async function render() {
   const current = ++version;
   if (!base) return;
   const name = $('preset').value, strength = Number($('strength').value)/100;
   const disposable = $('disposable').checked, texture = Number($('texture').value)/100;
   const source = base;
+  const print = name==='indoor-print';
+  $('printShell').classList.toggle('paper',print);
+  const indoor = name==='gmic-px680' || print, tint = indoor ? Number($('tint').value)/100 : 0;
+  $('indoorControls').hidden = !indoor;
+  $('tintAmount').value = `${Math.round(tint*100)}`;
   $('amount').value = `${Math.round(strength*100)}%`;
   $('label').textContent = `${$('preset').selectedOptions[0].textContent} · ${Math.round(strength*100)}%`;
   if (disposable) $('label').textContent += ` · Film ${Math.round(texture*100)}%`;
@@ -169,11 +201,17 @@ async function render() {
         alpineColor(source.data[i],source.data[i+1],source.data[i+2],strength,rgb);
         for(let c=0;c<3;c++) out.data[i+c]=rgb[c];
       } else {
-        sampleLut(lut, source.data[i], source.data[i+1], source.data[i+2], rgb);
-        for (let c = 0; c < 3; c++) out.data[i+c] = source.data[i+c]*(1-strength)+rgb[c]*strength;
+        const input = [source.data[i],source.data[i+1],source.data[i+2]];
+        if (indoor) indoorTint(...input,tint,input);
+        sampleLut(lut, ...input, rgb);
+        for (let c = 0; c < 3; c++) out.data[i+c] = input[c]*(1-strength)+rgb[c]*strength;
       }
     }
-    if (disposable) applyDisposable(out, texture, name==='alpine');
+    if (print) for(let i=0;i<out.data.length;i+=4) {
+      printColor(out.data[i],out.data[i+1],out.data[i+2],rgb);
+      for(let c=0;c<3;c++) out.data[i+c]=rgb[c];
+    }
+    if (disposable) applyDisposable(out, texture, name==='alpine' || indoor);
     gradedCtx.putImageData(out, 0, 0);
     $('status').textContent = 'Sẵn sàng. Kéo thanh Trước / Sau để so sánh.';
     $('metrics').textContent = `${source.width} × ${source.height} px · ${lut?'LUT '+lut.size+'³':'Alpine Vintage'} · ${Math.round(performance.now()-started)} ms (trình duyệt)`;
@@ -204,10 +242,15 @@ $('file').addEventListener('change', async event => {
 });
 $('sample').onclick = () => setImage('assets/landscape.webp','landscape');
 $('preset').onchange = () => {
-  // Preserve the user's color and texture settings when comparing templates.
+  if ($('preset').value==='indoor-print') {
+    $('strength').value=88; $('texture').value=100; $('tint').value=19; $('disposable').checked=true;
+  } else if ($('preset').value==='gmic-px680') {
+    $('strength').value=85; $('texture').value=35; $('disposable').checked=true;
+  }
   render();
 };
 $('disposable').onchange = render;
+$('tint').oninput = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(render);};
 $('texture').oninput = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(render);};
 $('strength').oninput = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(render);};
 $('split').oninput = () => {
@@ -215,12 +258,21 @@ $('split').oninput = () => {
   $('overlay').style.clipPath = `inset(0 ${100-split}% 0 0)`;
   $('divider').style.left = `${split}%`;
 };
-$('save').onclick = () => graded.toBlob(blob => {
+$('save').onclick = () => ($('preset').value==='indoor-print' ? printCanvas() : graded).toBlob(blob => {
   if (!blob) return showError(new Error('Không xuất được ảnh.'));
   const url = URL.createObjectURL(blob), a = document.createElement('a');
-  a.href = url; a.download = `${filename}-${$('preset').value}-${$('strength').value}${$('disposable').checked?'-disposable-'+$('texture').value:''}.png`;
+  const tintTag = ['gmic-px680','indoor-print'].includes($('preset').value) ? '-tint-'+$('tint').value : '';
+  a.href = url; a.download = `${filename}-${$('preset').value}-${$('strength').value}${tintTag}${$('disposable').checked?'-disposable-'+$('texture').value:''}.png`;
   a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 },'image/png');
 // Exposed pure functions permit a deterministic identity-LUT verification.
-window.filmLab = {sampleLut, haldCubeSize, parseCube, applyDisposable, alpineColor, rgbToHsv, hsvToRgb};
+window.filmLab = {sampleLut, haldCubeSize, parseCube, applyDisposable, alpineColor, rgbToHsv, hsvToRgb, indoorTint, printColor};
 setImage('assets/landscape.webp','landscape');
+
+if (new URLSearchParams(location.search).get('preset')==='indoor') {
+  $('preset').value='gmic-px680'; $('preset').onchange();
+}
+
+if (new URLSearchParams(location.search).get('preset')==='print') {
+  $('preset').value='indoor-print'; $('preset').onchange();
+}

@@ -85,3 +85,17 @@ Người dùng chọn PictureFX SX-70 sau khi thử và yêu cầu thêm chất 
 Mặc định: SX-70 100%, texture 60% bật. Grain, softness, vignette và color cast hiện là lớp sáng tạo chung của prototype; có thể tắt hoặc chỉnh riêng. Đổi template giữ nguyên mức màu/texture để so sánh cùng điều kiện. Attribution G’MIC lưu tại assets/ATTRIBUTION-gmic.txt.
 
 QA bộ instant: cả 4 template render thành công trên browser (1200×800, LUT 64³), giữ texture 60% khi đổi preset; kiểm tra thuần bằng node verify.cjs đạt. Preview: instant-templates-preview.jpg.
+
+## Indoor Instant — thử nghiệm 12/10/2026
+
+Thêm G’MIC / Pat David PX-680 gốc, không thay đổi bộ 4 template đã chọn. Mở `http://127.0.0.1:8780/?preset=indoor` để chọn nhanh. Khi chọn Indoor Instant: LUT 85%, texture 35%, Tint mặc định 0. Tint xanh–magenta áp trước LUT trên sRGB đã xử lý, không phải white balance RAW hiệu chuẩn. Texture giữ grain, softness và vignette nhưng bỏ lớp nâng đen/color cast chung để không thêm cyan vào vùng tối.
+
+Chọn ảnh trong nhà của người dùng để đánh giá; ảnh phong cảnh mẫu không chứng minh hiệu quả dưới huỳnh quang. Chưa có bộ test ảnh trong nhà hoặc hiệu chuẩn đèn cụ thể. Nguồn và giấy phép ghi trong assets/ATTRIBUTION-gmic.txt.
+
+## Indoor Flash Print — bản thử 12/10/2026
+
+Biến thể riêng dựa trên PX-680 30%, tone curve kem nhẹ, giảm saturation, floor nâu và texture 30%. Viền giấy trắng ngà xuất cùng PNG; giữ bố cục/tỷ lệ ảnh gốc, không crop vuông. URL chọn nhanh: `?preset=print`. Đây là diễn giải màu theo reference người dùng, không mô phỏng flash hoặc film stock được hiệu chuẩn. Kiểm tra trên ảnh HEIC cá nhân đã chuyển bằng macOS; ảnh cá nhân và output lưu ngoài repo.
+
+### Thông số người dùng chọn — 12/10/2026
+
+Thay mặc định thử nghiệm ở trên bằng: LUT 88%, texture 100% bật, Tint +19 và khung giấy bật. Khi chọn Indoor Flash Print hoặc mở `?preset=print`, tự nạp các thông số này. Recipe phiên bản 1 lưu trong `presets/indoor-flash-print.json`, gồm thứ tự xử lý, tone curve và khung để chuyển sang iOS sau. Tint +19 thuộc thang của prototype này, không tương đương +19 trong Lightroom. Đây là preset indoor bổ sung; bộ 4 instant trước đó giữ nguyên.
